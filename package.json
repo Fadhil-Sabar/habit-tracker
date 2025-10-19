@@ -45,6 +45,7 @@
 	},
 	"dependencies": {
 		"lucide-svelte": "^0.545.0",
-		"svelte-dnd-action": "^0.9.65"
+		"svelte-dnd-action": "^0.9.65",
+		"uuid": "^13.0.0"
 	}
 }

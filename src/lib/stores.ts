@@ -1,5 +1,5 @@
 export interface Habit {
-    id: number;
+    id: string;
     name: string;
     dates: { month: Months; days: number[] }[];
 }

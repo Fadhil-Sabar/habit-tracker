@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { buttonVariants } from '$lib/components/ui/button/button.svelte';
+	import Button, { buttonVariants } from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { Popover } from '$lib/components/ui/popover';
@@ -10,8 +10,19 @@
 	import { getDaysInMonth } from '$lib/utils';
 	import { dndzone } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
-	import { GripVertical } from 'lucide-svelte';
+	import { GripVertical, Moon, Trash } from 'lucide-svelte';
 	import { Months, type Habit } from '$lib/stores';
+	import Table from '$lib/components/ui/table/table.svelte';
+	import TableHeader from '$lib/components/ui/table/table-header.svelte';
+	import TableRow from '$lib/components/ui/table/table-row.svelte';
+	import TableHead from '$lib/components/ui/table/table-head.svelte';
+	import TableBody from '$lib/components/ui/table/table-body.svelte';
+	import TableCell from '$lib/components/ui/table/table-cell.svelte';
+	import Progress from '$lib/components/ui/progress/progress.svelte';
+	import { v4 as uuidV4 } from 'uuid';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import { Dialog, DialogContent, DialogTrigger } from '$lib/components/ui/dialog';
 
 	const months: Months[] = [
 		Months.JAN,
@@ -28,42 +39,16 @@
 		Months.DEC
 	];
 
-	let currentMonth = months[new Date().getMonth()];
 	const today = new Date();
+	let currentMonth = months[today.getMonth()];
 	const currentYear = today.getFullYear();
-	const listDate = getDaysInMonth(today.getMonth(), currentYear);
-	let listHabit: Habit[] = [
-		{
-			id: Math.random(),
-			name: 'Exercise',
-			dates: [
-				{
-					month: Months.OCT,
-					days: [1, 2, 3, 5, 8, 13, 21]
-				}
-			]
-		},
-		{
-			id: Math.random(),
-			name: 'Read',
-			dates: [
-				{
-					month: Months.OCT,
-					days: [1, 2, 4, 6, 7, 10, 15]
-				}
-			]
-		},
-		{
-			id: Math.random(),
-			name: 'Meditate',
-			dates: [
-				{
-					month: Months.OCT,
-					days: [1, 3, 5, 7, 9, 11, 13]
-				}
-			]
-		}
-	];
+	let listDate = getDaysInMonth(months.indexOf(currentMonth) + 1, currentYear);
+
+	let filterProgress = today.getDate();
+	let filterProgressTitle = `${today.toLocaleString('default', { month: 'long' })}`;
+
+	let listHabit: Habit[] = [];
+	let hasInit = false;
 
 	const handleCheckHabit = (habitToUpdate: Habit, date: number) => {
 		listHabit = listHabit.map((h) => {
@@ -87,10 +72,45 @@
 		console.log(event.detail.items);
 		listHabit = event.detail.items;
 	};
+
 	const handleChangeHabit = (e: Event, habitToUpdate: Habit) => {
 		const newName = (e.target as HTMLInputElement).value;
 		listHabit = listHabit.map((h) => (h.id === habitToUpdate.id ? { ...h, name: newName } : h));
 	};
+
+	const handleAddNewHabit = () => {
+		listHabit = [
+			...listHabit,
+			{
+				id: uuidV4(),
+				name: 'New Habit',
+				dates: []
+			}
+		];
+	};
+
+	const handleDeleteHabit = (habitToDelete: Habit) => {
+		listHabit = listHabit.filter((h) => h.id !== habitToDelete.id);
+	};
+
+	onMount(() => {
+		const savedHabits = localStorage.getItem('listHabit');
+		if (savedHabits) {
+			listHabit = JSON.parse(savedHabits);
+		}
+		hasInit = true;
+	});
+
+	$: {
+		listDate = getDaysInMonth(months.indexOf(currentMonth) + 1, currentYear);
+		filterProgressTitle = `${new Date(currentYear, months.indexOf(currentMonth)).toLocaleString(
+			'default',
+			{ month: 'long' }
+		)}`;
+		if (browser && hasInit) {
+			localStorage.setItem('listHabit', JSON.stringify(listHabit));
+		}
+	}
 </script>
 
 <div class="m-10 font-sans text-[16px]">
@@ -101,7 +121,7 @@
 				<PopoverTrigger class={buttonVariants({ variant: 'default' }) + ' text-[1em]'}
 					>List Habit</PopoverTrigger
 				>
-				<PopoverContent class="w-48" align="start">
+				<PopoverContent class="min-w-min" align="start">
 					<div
 						class="flex flex-col gap-2 overflow-scroll"
 						use:dndzone={{ items: listHabit, flipDurationMs: 300 }}
@@ -116,10 +136,38 @@
 								<Input
 									id="width"
 									value={habit.name}
-									size={10}
-									class="col-span-2 h-8"
+									class="col-span-2 h-8 md:text-[1em]"
 									onchange={(e) => handleChangeHabit(e, habit)}
 								/>
+
+								<Dialog>
+									<DialogTrigger
+										class={buttonVariants({ size: 'icon' }) + ' ml-2 cursor-pointer bg-destructive'}
+									>
+										<Trash />
+									</DialogTrigger>
+
+									<DialogContent class="max-w-sm">
+										<p class="mb-4 text-[1em]">
+											Are you sure you want to delete the habit "<strong>{habit.name}</strong>"?
+										</p>
+										<div class="flex justify-end gap-2">
+											<Button
+												class={buttonVariants({ variant: 'secondary' }) +
+													' cursor-pointer text-[1em]'}
+											>
+												Cancel
+											</Button>
+											<Button
+												class={buttonVariants({ variant: 'destructive' }) +
+													' cursor-pointer text-[1em]'}
+												onclick={() => handleDeleteHabit(habit)}
+											>
+												Delete
+											</Button>
+										</div>
+									</DialogContent>
+								</Dialog>
 							</div>
 						{/each}
 
@@ -127,8 +175,7 @@
 							<button
 								class={buttonVariants({ variant: 'outline' }) +
 									' w-full text-[1em] hover:bg-primary-foreground'}
-								on:click={() =>
-									(listHabit = [...listHabit, { id: Math.random(), name: 'New Habit', dates: [] }])}
+								on:click={() => handleAddNewHabit()}
 							>
 								Add Habit
 							</button>
@@ -137,7 +184,6 @@
 				>
 			</Popover>
 		</div>
-		<div>{currentMonth}</div>
 
 		<div class="flex flex-col rounded ring-2 ring-primary-foreground">
 			<span class="bg-primary-foreground py-1 text-center text-[1.25em] font-bold">Month</span>
@@ -151,7 +197,7 @@
 					<div>
 						{#each [...months.slice(0, 6)] as month}
 							<ToggleGroupItem
-								class="h-12 w-14 cursor-pointer text-[1em] font-medium focus-within:bg-accent-foreground"
+								class={`${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
 								value={month}
 								aria-label={`Select ${month}`}
 							>
@@ -162,7 +208,7 @@
 					<div>
 						{#each [...months.slice(6)] as month}
 							<ToggleGroupItem
-								class="h-12 w-14 cursor-pointer text-[1em] font-medium focus-within:bg-accent-foreground"
+								class={`${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
 								value={month}
 								aria-label={`Select ${month}`}
 							>
@@ -175,27 +221,63 @@
 		</div>
 	</div>
 
-	<div class="my-5 overflow-x-auto ring-2 ring-primary-foreground">
-		<div
-			class="grid items-center justify-between divide-x-2"
-			style="grid-template-columns: 200px repeat({listDate.length}, 60px);"
-		>
-			<span class="sticky left-0 border-r-2 border-b-2 bg-background p-2 font-bold">Habits</span>
-			{#each listDate as date}
-				<span class="border-b-2 bg-primary-foreground p-2 text-center font-bold">{date}</span>
-			{/each}
+	<div class="mt-10">
+		<Table class="border-2 border-r-0 text-[1em]">
+			<TableHeader>
+				<TableRow>
+					<TableHead class="max-w-min min-w-[200px] border-r-2 text-left">Habit</TableHead>
+					<TableHead class="max-w-min min-w-[250px] border-r-2 text-left"
+						>Monthly Progress ({filterProgressTitle})</TableHead
+					>
+					{#each listDate as date}
+						<TableHead
+							class="min-w-12 border-r-2 bg-primary-foreground text-center hover:cursor-pointer hover:bg-primary/30!"
+							>{date}</TableHead
+						>
+					{/each}
+				</TableRow>
+			</TableHeader>
 
-			{#each listHabit as habit (habit.id)}
-				<span class="sticky left-0 border-r-2 border-b-2 bg-background p-2">{habit.name}</span>
-				{#each listDate as date}
-					<div class="flex items-center justify-center p-2">
-						<Checkbox
-							checked={habit.dates.find((d) => d.month === currentMonth)?.days.includes(date)}
-							on:click={() => handleCheckHabit(habit, date)}
-						/>
-					</div>
+			<TableBody>
+				{#each listHabit as habit (habit.id)}
+					<TableRow class="group">
+						<TableCell
+							class="sticky left-0 z-10 border-r-2 bg-background group-hover:!bg-background"
+							>{habit.name}</TableCell
+						>
+						<TableCell class="flex items-center justify-between gap-2 border-r-2 bg-background">
+							<span
+								>{Math.round(
+									((habit.dates.find((d) => d.month === currentMonth)?.days ?? []).length /
+										listDate.length) *
+										100
+								)}%</span
+							>
+							<Progress
+								value={((habit.dates.find((d) => d.month === currentMonth)?.days ?? []).length /
+									listDate.length) *
+									100}
+								max={100}
+							/>
+						</TableCell>
+						{#each listDate as date}
+							<TableCell align="center" class="border-r-2 p-0">
+								<Checkbox
+									class="h-5 w-5 hover:cursor-pointer"
+									checked={habit.dates.find((d) => d.month === currentMonth)?.days.includes(date)}
+									onclick={() => handleCheckHabit(habit, date)}
+								/>
+							</TableCell>
+						{/each}
+					</TableRow>
 				{/each}
-			{/each}
-		</div>
+			</TableBody>
+		</Table>
+	</div>
+
+	<div class="absolute right-0 bottom-0 m-5">
+		<Button size="icon" class="hover:cursor-pointer hover:bg-primary/80">
+			<Moon />
+		</Button>
 	</div>
 </div>
