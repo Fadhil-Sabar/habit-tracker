@@ -2,6 +2,8 @@ export interface Habit {
     id: string;
     name: string;
     dates: { month: Months; days: number[] }[];
+    startTime?: string;
+    endTime?: string;
 }
 
 export enum Months {

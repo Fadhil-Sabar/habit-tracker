@@ -10,7 +10,7 @@
 	import { getDaysInMonth } from '$lib/utils';
 	import { dndzone } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
-	import { GripVertical, Moon, Trash } from 'lucide-svelte';
+	import { Clock, GripVertical, Moon, Trash } from 'lucide-svelte';
 	import { Months, type Habit } from '$lib/stores';
 	import Table from '$lib/components/ui/table/table.svelte';
 	import TableHeader from '$lib/components/ui/table/table-header.svelte';
@@ -121,15 +121,15 @@
 				<PopoverTrigger class={buttonVariants({ variant: 'default' }) + ' text-[1em]'}
 					>List Habit</PopoverTrigger
 				>
-				<PopoverContent class="min-w-min" align="start">
+				<PopoverContent class="min-w-[400px]" align="start">
 					<div
-						class="flex flex-col gap-2 overflow-scroll"
+						class="flex flex-col gap-2 overflow-hidden"
 						use:dndzone={{ items: listHabit, flipDurationMs: 300 }}
 						on:finalize={handleDndFinalize}
 						on:consider={handleDndFinalize}
 					>
 						{#each listHabit as habit (habit.id)}
-							<div animate:flip={{ duration: 300 }} class="flex items-center">
+							<div animate:flip={{ duration: 300 }} class="flex items-center gap-2">
 								<div class="cursor-grab rounded p-1 hover:bg-secondary">
 									<GripVertical class="h-5 w-5 text-muted-foreground" />
 								</div>
@@ -140,9 +140,26 @@
 									onchange={(e) => handleChangeHabit(e, habit)}
 								/>
 
+								<div class="flex items-center gap-2 pl-2">
+									<Popover>
+										<PopoverTrigger
+											class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-primary'}
+										>
+											<Clock />
+										</PopoverTrigger>
+										<PopoverContent align="start">
+											<div class="flex flex-row items-center justify-between gap-2">
+												<Input type="time" bind:value={habit.startTime} />
+												<span> - </span>
+												<Input type="time" bind:value={habit.endTime} />
+											</div>
+										</PopoverContent>
+									</Popover>
+								</div>
+
 								<Dialog>
 									<DialogTrigger
-										class={buttonVariants({ size: 'icon' }) + ' ml-2 cursor-pointer bg-destructive'}
+										class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-destructive'}
 									>
 										<Trash />
 									</DialogTrigger>
@@ -197,7 +214,7 @@
 					<div>
 						{#each [...months.slice(0, 6)] as month}
 							<ToggleGroupItem
-								class={`${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
+								class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
 								value={month}
 								aria-label={`Select ${month}`}
 							>
@@ -208,7 +225,7 @@
 					<div>
 						{#each [...months.slice(6)] as month}
 							<ToggleGroupItem
-								class={`${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
+								class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
 								value={month}
 								aria-label={`Select ${month}`}
 							>
@@ -226,12 +243,13 @@
 			<TableHeader>
 				<TableRow>
 					<TableHead class="max-w-min min-w-[200px] border-r-2 text-left">Habit</TableHead>
+					<TableHead class="max-w-min min-w-[150px] border-r-2 text-left">Time</TableHead>
 					<TableHead class="max-w-min min-w-[250px] border-r-2 text-left"
 						>Monthly Progress ({filterProgressTitle})</TableHead
 					>
 					{#each listDate as date}
 						<TableHead
-							class="min-w-12 border-r-2 bg-primary-foreground text-center hover:cursor-pointer hover:bg-primary/30!"
+							class="min-w-12 border-r-2 bg-primary-foreground text-center transition-colors hover:cursor-pointer hover:bg-primary/30!"
 							>{date}</TableHead
 						>
 					{/each}
@@ -244,6 +262,10 @@
 						<TableCell
 							class="sticky left-0 z-10 border-r-2 bg-background group-hover:!bg-background"
 							>{habit.name}</TableCell
+						>
+						<TableCell
+							class="sticky left-0 z-10 border-r-2 bg-background group-hover:!bg-background"
+							>{habit.startTime}{habit.endTime ? ' - ' + habit.endTime : ''}</TableCell
 						>
 						<TableCell class="flex items-center justify-between gap-2 border-r-2 bg-background">
 							<span
