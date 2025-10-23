@@ -263,8 +263,7 @@
 							class="sticky left-0 z-10 border-r-2 bg-background group-hover:!bg-background"
 							>{habit.name}</TableCell
 						>
-						<TableCell
-							class="sticky left-0 z-10 border-r-2 bg-background group-hover:!bg-background"
+						<TableCell class="border-r-2 bg-background group-hover:!bg-background"
 							>{habit.startTime}{habit.endTime ? ' - ' + habit.endTime : ''}</TableCell
 						>
 						<TableCell class="flex items-center justify-between gap-2 border-r-2 bg-background">
