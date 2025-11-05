@@ -23,6 +23,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { Dialog, DialogContent, DialogTrigger } from '$lib/components/ui/dialog';
+	import Calendar from '$lib/components/calendar/calendar.svelte';
 
 	const months: Months[] = [
 		Months.JAN,
@@ -113,10 +114,10 @@
 	}
 </script>
 
-<div class="m-10 font-sans text-[16px]">
+<div class="m-10 text-[16px]">
 	<div class="flex flex-row justify-between">
 		<div class="flex flex-col items-start justify-between">
-			<span class="text-[1.5em] font-bold tracking-widest">Habit Tracker</span>
+			<span class="text-[1.75em] font-bold tracking-widest">Habit Tracker</span>
 			<Popover>
 				<PopoverTrigger class={buttonVariants({ variant: 'default' }) + ' text-[1em]'}
 					>List Habit</PopoverTrigger
@@ -242,14 +243,15 @@
 		<Table class="border-2 border-r-0 text-[1em]">
 			<TableHeader>
 				<TableRow>
-					<TableHead class="max-w-min min-w-[200px] border-r-2 text-left">Habit</TableHead>
-					<TableHead class="max-w-min min-w-[150px] border-r-2 text-left">Time</TableHead>
-					<TableHead class="max-w-min min-w-[250px] border-r-2 text-left"
+					<TableHead class="max-w-min min-w-[200px] border-r-2 text-left font-bold">Habit</TableHead
+					>
+					<TableHead class="max-w-min min-w-[150px] border-r-2 text-left font-bold">Time</TableHead>
+					<TableHead class="max-w-min min-w-[300px] border-r-2 text-left font-bold"
 						>Monthly Progress ({filterProgressTitle})</TableHead
 					>
 					{#each listDate as date}
 						<TableHead
-							class="min-w-12 border-r-2 bg-primary-foreground text-center transition-colors hover:cursor-pointer hover:bg-primary/30!"
+							class="min-w-12 border-r-2 bg-primary-foreground text-center font-semibold transition-colors hover:cursor-pointer hover:bg-primary/30!"
 							>{date}</TableHead
 						>
 					{/each}
@@ -295,6 +297,10 @@
 			</TableBody>
 		</Table>
 	</div>
+
+	<!-- <div class="my-10">
+		<Calendar />
+	</div> -->
 
 	<div class="absolute right-0 bottom-0 m-5">
 		<Button size="icon" class="hover:cursor-pointer hover:bg-primary/80">
