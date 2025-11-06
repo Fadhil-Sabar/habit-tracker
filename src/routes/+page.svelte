@@ -302,7 +302,7 @@
 		<Calendar />
 	</div> -->
 
-	<div class="absolute right-0 bottom-0 m-5">
+	<div class="fixed right-0 bottom-0 m-5">
 		<Button size="icon" class="hover:cursor-pointer hover:bg-primary/80">
 			<Moon />
 		</Button>
