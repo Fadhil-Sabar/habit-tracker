@@ -1,103 +1,61 @@
 <script lang="ts">
 	import { addWeeks, subWeeks, startOfWeek, addDays, format, isSameDay } from 'date-fns';
-	import { fly } from 'svelte/transition'; // use fly for x/y translation
-	import { cubicOut } from 'svelte/easing'; // <-- BARU: Impor easing const
-	import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+	import { fly } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
+	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 	import { Input } from '../ui/input';
 	import { Textarea } from '../ui/textarea';
-	import Button from '../ui/button/button.svelte';
+	import Button, { buttonVariants } from '../ui/button/button.svelte';
+	import { onMount } from 'svelte';
+	import { Select, SelectGroup, SelectItem, SelectTrigger } from '../ui/select';
+	import SelectContent from '../ui/select/select-content.svelte';
+	import { getAllColorPalette } from '$lib/utils';
+	import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+	import { Calendar } from '../ui/calendar';
+	import { CalendarIcon, Pencil, Trash } from 'lucide-svelte';
+	import { CalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
+	import { browser } from '$app/environment';
 
-	// --- 1. DATA (Sama seperti sebelumnya) ---
-	let allEvents = [
-		// ... (data acaramu tidak berubah) ...
+	interface Event {
+		id: string;
+		title: string;
+		calendarId: string;
+		date: DateValue;
+		startHour: number;
+		description?: string;
+		durationHours: number;
+	}
+
+	interface Calendar {
+		id: string;
+		name: string;
+		color: string;
+	}
+
+	let allEvents: Event[] = [];
+
+	let calendars: Calendar[] = [
 		{
-			id: 'e1',
-			title: 'Morning bike ride',
-			calendarId: 'c1',
-			date: '2025-04-01',
-			startHour: 8,
-			durationHours: 1,
-			description: 'Enjoy a refreshing bike ride around the park.'
-		},
-		{
-			id: 'e2',
-			title: 'Artist workshop',
-			calendarId: 'c4',
-			date: '2025-04-01',
-			startHour: 9,
-			durationHours: 2,
-			description: 'Learn new painting techniques with local artists.'
-		},
-		{
-			id: 'e3',
-			title: 'Meet Orkun',
-			calendarId: 'c2',
-			date: '2025-04-02',
-			startHour: 8.5,
-			durationHours: 1,
-			description: 'Discuss project updates and next steps.'
-		},
-		{
-			id: 'e4',
-			title: 'Portfolio work',
-			calendarId: 'c2',
-			date: '2025-04-02',
-			startHour: 10,
-			durationHours: 1.5,
-			description: 'Update portfolio with recent projects and designs.'
-		},
-		{
-			id: 'e5',
-			title: 'Stretching',
-			calendarId: 'c1',
-			date: '2025-04-03',
-			startHour: 11,
-			durationHours: 1,
-			description: 'Morning stretching routine to improve flexibility.'
-		},
-		{
-			id: 'e6',
-			title: 'Budget meeting',
-			calendarId: 'c3',
-			date: '2025-04-04',
-			startHour: 11,
-			durationHours: 1,
-			description: 'Discuss family budget and upcoming expenses.'
-		},
-		{
-			id: 'e7',
-			title: 'Soccer practice',
-			calendarId: 'c4',
-			date: '2025-04-05',
-			startHour: 16,
-			durationHours: 1.5,
-			description: 'Weekly soccer practice with the school team.'
-		},
-		{
-			id: 'e8',
-			title: 'Hike with Rigo',
-			calendarId: 'c3',
-			date: '2025-04-06',
-			startHour: 9,
-			durationHours: 3,
-			description: 'Explore new trails and enjoy nature.'
+			id: 'c1',
+			name: 'Personal',
+			color: '#3b82f6'
 		}
 	];
 
-	const calendars = [
-		{ id: 'c1', name: 'Personal', color: '#ef4444' },
-		{ id: 'c2', name: 'Work', color: '#3b82f6' },
-		{ id: 'c3', name: 'Family', color: '#22c55e' },
-		{ id: 'c4', name: 'School', color: '#eab308' }
-	];
+	let hasInit = false;
 
-	// --- 2. STATE ---
+	$: {
+		if (browser && hasInit) {
+			localStorage.setItem('calendars', JSON.stringify(calendars));
 
-	let currentDate = new Date('2025-04-01T00:00:00');
+			localStorage.setItem('events', JSON.stringify(allEvents));
+		}
+	}
+
+	let currentDate = new Date();
 	const timeSlots = Array.from({ length: 24 }, (_, i) => i);
 	let visibleCalendarIds = calendars.map((cal) => cal.id);
 
-	// <-- BARU: State untuk melacak arah animasi -->
 	let animationDirection: 'next' | 'prev' = 'next';
 
 	let modal = {
@@ -105,12 +63,21 @@
 		isOpen: false,
 		title: '',
 		description: '',
-		date: '',
+		date: new CalendarDate(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()),
 		startTime: '09:00',
-		endTime: '10:00'
+		endTime: '10:00',
+		calendarId: '',
+		isEditing: false
 	};
 
-	// --- 3. REAKTIVITAS (Sama seperti sebelumnya) ---
+	let calendar = {
+		open: false,
+		id: '',
+		name: '',
+		color: '#ff0000'
+	};
+
+	let openDateModal = false;
 
 	$: displayedWeek = (() => {
 		const start = startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -121,14 +88,42 @@
 
 	$: filteredEvents = allEvents.filter((event) => visibleCalendarIds.includes(event.calendarId));
 
+	onMount(() => {
+		const savedEvents = localStorage.getItem('events');
+		if (savedEvents) {
+			allEvents = JSON.parse(savedEvents);
+			allEvents = allEvents.map((event) => ({
+				...event,
+				date: new CalendarDate(event.date.year, event.date.month, event.date.day)
+			}));
+			refreshEvents();
+		}
+
+		let savedCalendars = localStorage.getItem('calendars');
+		if (savedCalendars) {
+			calendars = JSON.parse(savedCalendars);
+			visibleCalendarIds = calendars.map((cal) => cal.id);
+		}
+		hasInit = true;
+	});
+
+	$: mode = {
+		isEdit: !!modal.isEditing,
+		isCreate: !!(!modal.isEditing && !modal.id),
+		isDetail: !!(!modal.isEditing && modal.id)
+	};
+
 	// --- 4. HELPER constS ---
 
 	const getCalendar = (calendarId: string) => {
 		return calendars.find((cal) => cal.id === calendarId);
 	};
 
-	const getEventsForDay = (date: Date) => {
-		return filteredEvents.filter((event) => isSameDay(new Date(event.date), date));
+	$: getEventsForDay = (date: Date) => {
+		return filteredEvents.filter((event) => {
+			const eventDate = event.date.toDate(getLocalTimeZone()).toLocaleDateString();
+			return isSameDay(new Date(eventDate), date);
+		});
 	};
 
 	const calculatePosition = (event: { startHour: number; durationHours: number }) => {
@@ -139,7 +134,6 @@
 		return `top: ${topPercent}%; height: ${heightPercent}%;`;
 	};
 
-	// <-- BARU: Fungsi navigasi diupdate untuk mengatur arah -->
 	const goToNextWeek = () => {
 		animationDirection = 'next'; // Set arah
 		currentDate = addWeeks(currentDate, 1);
@@ -154,14 +148,11 @@
 		const today = new Date();
 		if (isSameDay(currentDate, today)) return; // Sudah di hari ini
 
-		// Cek apakah 'today' ada di minggu yang sedang ditampilkan
 		const isTodayInCurrentWeek = displayedWeek.some((day) => isSameDay(day, today));
 
 		if (isTodayInCurrentWeek) {
-			// Jika ya, cukup update currentDate. Tidak perlu animasi.
 			currentDate = today;
 		} else {
-			// Jika tidak, kita perlu pindah minggu DAN animasi.
 			animationDirection = today > currentDate ? 'next' : 'prev';
 			currentDate = today;
 		}
@@ -173,9 +164,12 @@
 			isOpen: true,
 			title: '',
 			description: '',
-			date: format(day, 'yyyy-MM-dd'),
+			date: new CalendarDate(day.getFullYear(), day.getMonth() + 1, day.getDate()),
 			startTime: `${String(hour).padStart(2, '0')}:00`,
-			endTime: `${String(hour + 1).padStart(2, '0')}:00`
+			endTime: `${String(hour + 1).padStart(2, '0')}:00`,
+
+			calendarId: calendars[0]?.id || '',
+			isEditing: false
 		};
 	};
 
@@ -195,32 +189,55 @@
 			isOpen: true,
 			title: data.title,
 			description: data.description,
-			date: data.date,
+			date: new CalendarDate(
+				new Date(data.date).getFullYear(),
+				new Date(data.date).getMonth() + 1,
+				new Date(data.date).getDate()
+			),
 			startTime: `${String(Math.floor(data.startHour)).padStart(2, '0')}:${String(
 				(data.startHour % 1) * 60
 			).padStart(2, '0')}`,
 			endTime: `${String(Math.floor(data.startHour + data.durationHours)).padStart(
 				2,
 				'0'
-			)}:${String(((data.startHour + data.durationHours) % 1) * 60).padStart(2, '0')}`
+			)}:${String(((data.startHour + data.durationHours) % 1) * 60).padStart(2, '0')}`,
+
+			calendarId: data.calendarId,
+			isEditing: false
 		};
 	};
 
 	const handleKeyDownDetailHour = (event: KeyboardEvent, data: any) => {
-		// Jika tombol yang ditekan adalah Spasi atau Enter
 		if (event.key === ' ' || event.key === 'Enter') {
-			// Cegah aksi default (mis
 			event.preventDefault();
-			// Panggil fungsi klik yang sama
 			handleDetailHour(data);
 		}
 	};
 
+	const refreshEvents = () => {
+		goToNextWeek();
+		goToPrevWeek();
+	};
+
+	const resetModal = () => {
+		modal = {
+			id: '',
+			isOpen: false,
+			title: '',
+			description: '',
+			date: new CalendarDate(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()),
+			startTime: '09:00',
+			endTime: '10:00',
+			calendarId: '',
+			isEditing: false
+		};
+	};
+
 	const handleAddEvent = () => {
 		const newEvent = {
-			id: modal.id ?? `e${allEvents.length + 1}`,
+			id: modal.id || `e${allEvents.length + 1}`,
 			title: modal.title,
-			calendarId: 'c1', // Default ke kalender Personal
+			calendarId: modal.calendarId ?? 'c1', // Default ke kalender Personal
 			date: modal.date,
 			startHour: parseInt(modal.startTime.split(':')[0], 10),
 			description: modal.description,
@@ -241,23 +258,55 @@
 			allEvents = [...allEvents, newEvent];
 		}
 
-		goToNextWeek();
-		goToPrevWeek();
+		refreshEvents();
 
-		modal = {
+		resetModal();
+	};
+
+	const handleOpenCalendar = () => {
+		calendar.open = true;
+	};
+
+	const handleCloseCalendar = () => {
+		calendar = {
+			open: false,
 			id: '',
-			isOpen: false,
-			title: '',
-			description: '',
-			date: '',
-			startTime: '09:00',
-			endTime: '10:00'
+			name: '',
+			color: '#ff0000'
 		};
+	};
+
+	const handleAddCalendar = () => {
+		const id = `c${calendars.length + 1}`;
+		calendars = [
+			...calendars,
+			{
+				id,
+				name: calendar.name,
+				color: calendar.color
+			}
+		];
+
+		visibleCalendarIds = [...visibleCalendarIds, id];
+
+		handleCloseCalendar();
+	};
+
+	const handleEditModal = () => {
+		modal = {
+			...modal,
+			isEditing: true
+		};
+	};
+
+	const handleDeleteEvent = () => {
+		allEvents = allEvents.filter((item) => item.id !== modal.id);
+		resetModal();
 	};
 </script>
 
 <div class="flex h-screen bg-white text-gray-800">
-	<div class="w-64 flex-shrink-0 border-r p-4">
+	<div class="hidden w-64 flex-shrink-0 border-r p-4 md:block">
 		<h2 class="mb-4 text-xl font-bold">Calendars</h2>
 		<div class="space-y-2">
 			{#each calendars as calendar}
@@ -268,11 +317,53 @@
 						value={calendar.id}
 						class="form-checkbox rounded"
 						style="color: {calendar.color};"
+						on:change={refreshEvents}
 					/>
 					<span class="h-3 w-3 rounded-full" style="background-color: {calendar.color};"></span>
 					<span>{calendar.name}</span>
 				</label>
 			{/each}
+
+			<div class="flex items-center justify-center">
+				<button
+					class={buttonVariants({ variant: 'outline' }) +
+						' w-full text-[1em] hover:bg-primary-foreground'}
+					on:click={handleOpenCalendar}
+				>
+					Add Calendar
+				</button>
+				<Dialog open={calendar.open}>
+					<!-- <DialogTrigger class="w-full">
+					</DialogTrigger> -->
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>Add New Calendar</DialogTitle>
+						</DialogHeader>
+						<div class="flex flex-col">
+							<div class="flex gap-2">
+								<Input placeholder="Calendar Name" class="mb-4" bind:value={calendar.name} />
+								<Select type="single" bind:value={calendar.color}>
+									<SelectTrigger>Pick Color</SelectTrigger>
+									<SelectContent>
+										<SelectGroup>
+											{#each getAllColorPalette() as color}
+												<SelectItem value={color} style="background-color: {color};"
+													>{color}</SelectItem
+												>
+											{/each}
+										</SelectGroup>
+									</SelectContent>
+								</Select>
+								<Input type="color" class="mb-4" bind:value={calendar.color} />
+							</div>
+							<div class="mt-4 flex justify-end space-x-2">
+								<Button variant="secondary" onclick={handleCloseCalendar}>Cancel</Button>
+								<Button variant="default" onclick={handleAddCalendar}>Add Calendar</Button>
+							</div>
+						</div>
+					</DialogContent>
+				</Dialog>
+			</div>
 		</div>
 	</div>
 
@@ -301,7 +392,7 @@
 			{/each}
 		</div>
 
-		<div class="flex flex-1 overflow-y-auto">
+		<div class="flex flex-1 overflow-y-auto pt-4">
 			<div class="w-20 flex-shrink-0">
 				{#each timeSlots as hour}
 					<div class="-mt-2 h-12 pr-2 text-right text-sm text-gray-500">
@@ -372,26 +463,121 @@
 <Dialog open={modal.isOpen}>
 	<DialogContent>
 		<DialogHeader>
-			<DialogTitle>Add New Event</DialogTitle>
-		</DialogHeader>
+			<div class="flex items-center justify-between">
+				<DialogTitle
+					>{mode.isEdit
+						? 'Edit Event'
+						: mode.isDetail
+							? 'Detail Event'
+							: 'Add New Event'}</DialogTitle
+				>
+				<div class="mr-5 flex space-x-2">
+					<Button
+						class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-primary'}
+						onclick={() => handleEditModal()}
+					>
+						<Pencil />
+					</Button>
+					<Dialog>
+						<DialogTrigger
+							class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-destructive'}
+						>
+							<Trash />
+						</DialogTrigger>
 
-		<div class="flex flex-col">
-			<Input placeholder="Event Title" class="mb-4" bind:value={modal.title} />
-			<Textarea placeholder="Event Description" class="mb-4" bind:value={modal.description} />
-			<div class="flex flex-col justify-center">
-				<Input type="date" class="mb-4 grow" bind:value={modal.date} />
-				<div class="flex flex-row items-center justify-between gap-2">
-					<Input type="time" bind:value={modal.startTime} />
-					<span> - </span>
-					<Input type="time" bind:value={modal.endTime} />
+						<DialogContent class="max-w-sm">
+							<p class="mb-4 text-[1em]">Are you sure you want to delete the event?</p>
+							<div class="flex justify-end gap-2">
+								<Button
+									class={buttonVariants({ variant: 'secondary' }) + ' cursor-pointer text-[1em]'}
+								>
+									Cancel
+								</Button>
+								<Button
+									class={buttonVariants({ variant: 'destructive' }) + ' cursor-pointer text-[1em]'}
+									onclick={() => handleDeleteEvent()}
+								>
+									Delete
+								</Button>
+							</div>
+						</DialogContent>
+					</Dialog>
 				</div>
 			</div>
-			<div class="mt-4 flex justify-end space-x-2">
-				<Button variant="secondary" onclick={() => (modal.isOpen = false)}>Cancel</Button>
-				<Button variant="default" onclick={handleAddEvent}
-					>{modal.id ? 'Update' : 'Add'} Event</Button
-				>
+		</DialogHeader>
+
+		<div class="flex flex-col" id="modal-inputs">
+			<Input
+				placeholder="Event Title"
+				class="mb-4"
+				bind:value={modal.title}
+				disabled={mode.isDetail}
+			/>
+			<Textarea
+				placeholder="Event Description"
+				class="mb-4"
+				bind:value={modal.description}
+				disabled={mode.isDetail}
+			/>
+			<div class="flex flex-col justify-center gap-2">
+				<div class="grid grid-cols-2 gap-2">
+					<Select type="single" bind:value={modal.calendarId}>
+						<SelectTrigger class="w-full" disabled={mode.isDetail}
+							>{calendars.find((cal) => cal.id === modal.calendarId)?.name ||
+								'Choose Calendar'}</SelectTrigger
+						>
+						<SelectContent>
+							<SelectGroup>
+								{#each calendars as cal}
+									<SelectItem value={cal.id}>{cal.name}</SelectItem>
+								{/each}
+							</SelectGroup>
+						</SelectContent>
+					</Select>
+
+					<Popover bind:open={openDateModal}>
+						<PopoverTrigger id="date">
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="outline"
+									class="w-full justify-between font-normal"
+									disabled={mode.isDetail}
+								>
+									{modal.date
+										? modal.date.toDate(getLocalTimeZone()).toLocaleDateString()
+										: 'Select date'}
+									<CalendarIcon />
+								</Button>
+							{/snippet}
+						</PopoverTrigger>
+						<PopoverContent class="w-auto overflow-hidden p-0" align="start">
+							<Calendar
+								type="single"
+								bind:value={modal.date}
+								captionLayout="dropdown"
+								onValueChange={() => {
+									openDateModal = false;
+								}}
+							/>
+						</PopoverContent>
+					</Popover>
+				</div>
+
+				<div class="flex flex-row items-center justify-between gap-2">
+					<Input type="time" bind:value={modal.startTime} disabled={mode.isDetail} />
+					<span> - </span>
+					<Input type="time" bind:value={modal.endTime} disabled={mode.isDetail} />
+				</div>
 			</div>
+			{#if !mode.isDetail}
+				<div class="mt-4 flex justify-end space-x-2">
+					<Button variant="secondary" onclick={() => (modal.isOpen = false)}>Cancel</Button>
+					<Button variant="default" onclick={handleAddEvent}
+						>{modal.isEditing ? 'Update' : 'Add'} Event</Button
+					>
+				</div>
+			{/if}
 		</div>
 	</DialogContent>
 </Dialog>

@@ -123,3 +123,7 @@
 body {
 	font-family: "Poppins", sans-serif;
 }
+
+#modal-inputs *[disabled] {
+	opacity: 1;
+}
