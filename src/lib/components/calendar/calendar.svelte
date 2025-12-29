@@ -2,7 +2,14 @@
 	import { addWeeks, subWeeks, startOfWeek, addDays, format, isSameDay } from 'date-fns';
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+	import {
+		Dialog,
+		DialogClose,
+		DialogContent,
+		DialogHeader,
+		DialogTitle,
+		DialogTrigger
+	} from '../ui/dialog';
 	import { Input } from '../ui/input';
 	import { Textarea } from '../ui/textarea';
 	import Button, { buttonVariants } from '../ui/button/button.svelte';
@@ -74,7 +81,8 @@
 		open: false,
 		id: '',
 		name: '',
-		color: '#ff0000'
+		color: '#ff0000',
+		isEdit: false
 	};
 
 	let openDateModal = false;
@@ -272,20 +280,28 @@
 			open: false,
 			id: '',
 			name: '',
-			color: '#ff0000'
+			color: '#ff0000',
+			isEdit: false
 		};
 	};
 
 	const handleAddCalendar = () => {
-		const id = `c${calendars.length + 1}`;
-		calendars = [
-			...calendars,
-			{
-				id,
-				name: calendar.name,
-				color: calendar.color
-			}
-		];
+		const id = calendar.id || `c${calendars.length + 1}`;
+		let newCalendar = {
+			id,
+			name: calendar.name,
+			color: calendar.color
+		};
+
+		if (calendar.id) {
+			// Update existing event
+			calendars = calendars.map((cal) =>
+				cal.id === calendar.id ? { ...cal, ...newCalendar, id: calendar.id } : cal
+			);
+		} else {
+			// Add new event
+			calendars = [...calendars, newCalendar];
+		}
 
 		visibleCalendarIds = [...visibleCalendarIds, id];
 
@@ -303,6 +319,19 @@
 		allEvents = allEvents.filter((item) => item.id !== modal.id);
 		resetModal();
 	};
+
+	const handleDetailCalendar = (dataCalendar: (typeof calendars)[0]) => {
+		calendar = {
+			...calendar,
+			...dataCalendar,
+			isEdit: false,
+			open: true
+		};
+	};
+
+	const handleEditCalendar = () => {
+		calendar.isEdit = true;
+	};
 </script>
 
 <div class="flex h-screen bg-white text-gray-800">
@@ -310,18 +339,27 @@
 		<h2 class="mb-4 text-xl font-bold">Calendars</h2>
 		<div class="space-y-2">
 			{#each calendars as calendar}
-				<label class="flex cursor-pointer items-center space-x-2">
-					<input
-						type="checkbox"
-						bind:group={visibleCalendarIds}
-						value={calendar.id}
-						class="form-checkbox rounded"
-						style="color: {calendar.color};"
-						on:change={refreshEvents}
-					/>
-					<span class="h-3 w-3 rounded-full" style="background-color: {calendar.color};"></span>
-					<span>{calendar.name}</span>
-				</label>
+				<div class="group flex h-8 items-center justify-between">
+					<label class="flex cursor-pointer items-center space-x-2">
+						<input
+							type="checkbox"
+							bind:group={visibleCalendarIds}
+							value={calendar.id}
+							class="form-checkbox rounded"
+							style="color: {calendar.color};"
+							on:change={refreshEvents}
+						/>
+						<span class="size-3 rounded-full" style="background-color: {calendar.color};"></span>
+						<span>{calendar.name}</span>
+					</label>
+					<button
+						class={buttonVariants({ size: 'sm' }) +
+							' hidden! cursor-pointer bg-primary group-hover:block!'}
+						on:click={() => handleDetailCalendar(calendar)}
+					>
+						<Pencil />
+					</button>
+				</div>
 			{/each}
 
 			<div class="flex items-center justify-center">
@@ -337,13 +375,66 @@
 					</DialogTrigger> -->
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Add New Calendar</DialogTitle>
+							<div class="flex items-center justify-between">
+								<DialogTitle
+									>{calendar.isEdit
+										? 'Edit Calendar'
+										: calendar.id
+											? 'Detail Calendar'
+											: 'Add New Calendar'}</DialogTitle
+								>
+								<div class="mr-5 flex space-x-2">
+									<Button
+										class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-primary'}
+										onclick={() => handleEditCalendar()}
+									>
+										<Pencil />
+									</Button>
+									<Dialog>
+										<DialogTrigger
+											class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-destructive'}
+										>
+											<Trash />
+										</DialogTrigger>
+
+										<DialogContent class="max-w-sm">
+											<p class="mb-4 text-[1em]">Are you sure you want to delete the calendar?</p>
+											<div class="flex justify-end gap-2">
+												<DialogClose
+													class={buttonVariants({ variant: 'secondary' }) +
+														' cursor-pointer text-[1em]'}
+												>
+													Cancel
+												</DialogClose>
+												<Button
+													class={buttonVariants({ variant: 'destructive' }) +
+														' cursor-pointer text-[1em]'}
+													onclick={() => handleDeleteEvent()}
+												>
+													Delete
+												</Button>
+											</div>
+										</DialogContent>
+									</Dialog>
+								</div>
+							</div>
 						</DialogHeader>
 						<div class="flex flex-col">
-							<div class="flex gap-2">
-								<Input placeholder="Calendar Name" class="mb-4" bind:value={calendar.name} />
-								<Select type="single" bind:value={calendar.color}>
-									<SelectTrigger>Pick Color</SelectTrigger>
+							<div class="flex gap-2" id="calendar-inputs">
+								<Input
+									placeholder="Calendar Name"
+									class="mb-4"
+									bind:value={calendar.name}
+									disabled={!!(!calendar.isEdit && calendar.id)}
+								/>
+								<Select
+									type="single"
+									bind:value={calendar.color}
+									disabled={!!(!calendar.isEdit && calendar.id)}
+								>
+									<SelectTrigger>
+										{getAllColorPalette().find((c) => c === calendar.color) || 'Pick Color'}
+									</SelectTrigger>
 									<SelectContent>
 										<SelectGroup>
 											{#each getAllColorPalette() as color}
@@ -354,12 +445,22 @@
 										</SelectGroup>
 									</SelectContent>
 								</Select>
-								<Input type="color" class="mb-4" bind:value={calendar.color} />
+								<Input
+									type="color"
+									class="mb-4"
+									bind:value={calendar.color}
+									disabled={!!(!calendar.isEdit && calendar.id)}
+								/>
 							</div>
-							<div class="mt-4 flex justify-end space-x-2">
-								<Button variant="secondary" onclick={handleCloseCalendar}>Cancel</Button>
-								<Button variant="default" onclick={handleAddCalendar}>Add Calendar</Button>
-							</div>
+
+							{#if !calendar.id || calendar.isEdit}
+								<div class="mt-4 flex justify-end space-x-2">
+									<Button variant="secondary" onclick={handleCloseCalendar}>Cancel</Button>
+									<Button variant="default" onclick={handleAddCalendar}>
+										{calendar.isEdit ? 'Update Calendar' : 'Add New Calendar'}
+									</Button>
+								</div>
+							{/if}
 						</div>
 					</DialogContent>
 				</Dialog>
