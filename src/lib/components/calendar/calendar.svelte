@@ -306,7 +306,7 @@
 </script>
 
 <div class="flex h-screen bg-white text-gray-800">
-	<div class="hidden w-64 flex-shrink-0 border-r p-4 md:block">
+	<div class="hidden w-64 flex-shrink-0 p-4 md:block">
 		<h2 class="mb-4 text-xl font-bold">Calendars</h2>
 		<div class="space-y-2">
 			{#each calendars as calendar}
@@ -367,7 +367,7 @@
 		</div>
 	</div>
 
-	<div class="flex flex-1 flex-col">
+	<div class="flex min-h-min flex-1 flex-col border pb-5">
 		<div class="flex items-center justify-between border-b p-2">
 			<h2 class="text-2xl font-bold text-gray-700">{displayedMonth}</h2>
 			<div class="flex space-x-2">
@@ -392,24 +392,24 @@
 			{/each}
 		</div>
 
-		<div class="flex flex-1 overflow-y-auto pt-4">
+		<div class="flex flex-1 pt-3">
 			<div class="w-20 flex-shrink-0">
 				{#each timeSlots as hour}
-					<div class="-mt-2 h-12 pr-2 text-right text-sm text-gray-500">
+					<div class="-mt-2 h-14 pr-2 text-right text-sm text-gray-500">
 						{#if hour === 0}
 							12 AM
 						{:else if hour < 12}
 							{hour} AM
-						{:else if hour === 12}
+						{:else if hour === 24}
 							12 PM
 						{:else}
-							{hour - 11} PM
+							{hour - 12} PM
 						{/if}
 					</div>
 				{/each}
 			</div>
 
-			<div class="relative flex-1 overflow-hidden">
+			<div class="relative flex-1">
 				{#key displayedWeek[0]}
 					<div
 						class="absolute inset-0 grid grid-cols-7"
@@ -433,6 +433,7 @@
 										on:keydown={(e) => handleKeyDownHour(e, hour, day)}
 										on:click={() => handleClickHour(hour, day)}
 										class="h-12 border-b border-gray-100 hover:cursor-pointer hover:bg-accent"
+										class:border-t={hour === 0}
 									></div>
 								{/each}
 
