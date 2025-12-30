@@ -70,7 +70,6 @@
 	};
 
 	const handleDndFinalize = (event: CustomEvent) => {
-		console.log(event.detail.items);
 		listHabit = event.detail.items;
 	};
 

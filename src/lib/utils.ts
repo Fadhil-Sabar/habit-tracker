@@ -15,7 +15,6 @@ export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?:
 export function getDaysInMonth(month: number, year: number) {
 	const lastDay = new Date(year, month, 0).getDate();
 
-	console.log(year, month);
 	return Array.from({ length: lastDay }, (_, i) => i + 1);
 }
 

@@ -332,6 +332,12 @@
 	const handleEditCalendar = () => {
 		calendar.isEdit = true;
 	};
+
+	const handleDeleteCalendar = () => {
+		allEvents = allEvents.filter((event) => event.calendarId !== calendar.id);
+		calendars = calendars.filter((item) => item.id !== calendar.id);
+		handleCloseCalendar();
+	};
 </script>
 
 <div class="flex h-screen bg-white text-gray-800">
@@ -398,7 +404,11 @@
 										</DialogTrigger>
 
 										<DialogContent class="max-w-sm">
-											<p class="mb-4 text-[1em]">Are you sure you want to delete the calendar?</p>
+											<p class="mb-4 text-[1em]">
+												Are you sure you want to delete the calendar? <b
+													>This will also delete all event that related to this calendar</b
+												>
+											</p>
 											<div class="flex justify-end gap-2">
 												<DialogClose
 													class={buttonVariants({ variant: 'secondary' }) +
@@ -409,7 +419,7 @@
 												<Button
 													class={buttonVariants({ variant: 'destructive' }) +
 														' cursor-pointer text-[1em]'}
-													onclick={() => handleDeleteEvent()}
+													onclick={() => handleDeleteCalendar()}
 												>
 													Delete
 												</Button>
@@ -441,7 +451,7 @@
 												<SelectItem value={color} style="background-color: {color};"
 													>{color}</SelectItem
 												>
-											{/each}
+											{/each}3
 										</SelectGroup>
 									</SelectContent>
 								</Select>
