@@ -22,7 +22,7 @@
 	import { v4 as uuidV4 } from 'uuid';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { Dialog, DialogContent, DialogTrigger } from '$lib/components/ui/dialog';
+	import { Dialog, DialogClose, DialogContent, DialogTrigger } from '$lib/components/ui/dialog';
 	import Calendar from '$lib/components/calendar/calendar.svelte';
 
 	const months: Months[] = [
@@ -70,7 +70,6 @@
 	};
 
 	const handleDndFinalize = (event: CustomEvent) => {
-		console.log(event.detail.items);
 		listHabit = event.detail.items;
 	};
 
@@ -114,8 +113,8 @@
 	}
 </script>
 
-<div class="m-10 text-[16px]">
-	<div class="flex flex-row justify-between">
+<div class="my-5 text-[16px] md:m-10">
+	<div class="mx-5 flex flex-row justify-between md:mx-0">
 		<div class="flex flex-col items-start justify-between">
 			<span class="text-[1.75em] font-bold tracking-widest">Habit Tracker</span>
 			<Popover>
@@ -170,12 +169,12 @@
 											Are you sure you want to delete the habit "<strong>{habit.name}</strong>"?
 										</p>
 										<div class="flex justify-end gap-2">
-											<Button
+											<DialogClose
 												class={buttonVariants({ variant: 'secondary' }) +
 													' cursor-pointer text-[1em]'}
 											>
 												Cancel
-											</Button>
+											</DialogClose>
 											<Button
 												class={buttonVariants({ variant: 'destructive' }) +
 													' cursor-pointer text-[1em]'}
@@ -210,36 +209,23 @@
 					type="single"
 					bind:value={currentMonth}
 					variant="outline"
-					class="flex flex-col"
+					class="grid grid-cols-3 md:grid-cols-6"
 				>
-					<div>
-						{#each [...months.slice(0, 6)] as month}
-							<ToggleGroupItem
-								class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
-								value={month}
-								aria-label={`Select ${month}`}
-							>
-								{month}
-							</ToggleGroupItem>
-						{/each}
-					</div>
-					<div>
-						{#each [...months.slice(6)] as month}
-							<ToggleGroupItem
-								class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
-								value={month}
-								aria-label={`Select ${month}`}
-							>
-								{month}
-							</ToggleGroupItem>
-						{/each}
-					</div>
+					{#each months as month}
+						<ToggleGroupItem
+							class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
+							value={month}
+							aria-label={`Select ${month}`}
+						>
+							{month}
+						</ToggleGroupItem>
+					{/each}
 				</ToggleGroup>
 			</ToggleGroup>
 		</div>
 	</div>
 
-	<div class="mt-10">
+	<div class="mx-5 mt-10">
 		<Table class="border-2 border-r-0 text-[1em]">
 			<TableHeader>
 				<TableRow>
@@ -298,9 +284,9 @@
 		</Table>
 	</div>
 
-	<!-- <div class="my-10">
+	<div class="my-10">
 		<Calendar />
-	</div> -->
+	</div>
 
 	<div class="fixed right-0 bottom-0 m-5">
 		<Button size="icon" class="hover:cursor-pointer hover:bg-primary/80">
