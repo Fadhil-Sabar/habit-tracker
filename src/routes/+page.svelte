@@ -32,6 +32,7 @@
 		SelectTrigger
 	} from '$lib/components/ui/select';
 	import { Label } from '$lib/components/ui/label';
+	import { ButtonGroup } from '$lib/components/ui/button-group';
 
 	const months: Months[] = [
 		Months.JAN,
@@ -132,115 +133,106 @@
 </script>
 
 <div class="my-5 text-[16px] md:m-10">
-	<div class="mx-5 flex flex-row justify-between md:mx-0">
-		<div class="flex flex-col items-start justify-between">
-			<span class="text-[1.75em] font-bold tracking-widest">Habit Tracker</span>
-			<Popover>
-				<PopoverTrigger class={buttonVariants({ variant: 'default' }) + ' text-[1em]'}
-					>List Habit</PopoverTrigger
-				>
-				<PopoverContent class="min-w-[400px]" align="start">
-					<div
-						class="flex flex-col gap-2 overflow-hidden"
-						use:dndzone={{ items: listHabit, flipDurationMs: 300 }}
-						on:finalize={handleDndFinalize}
-						on:consider={handleDndFinalize}
-					>
-						{#each listHabit as habit (habit.id)}
-							<div animate:flip={{ duration: 300 }} class="flex items-center gap-2">
-								<div class="cursor-grab rounded p-1 hover:bg-secondary">
-									<GripVertical class="h-5 w-5 text-muted-foreground" />
-								</div>
-								<Input
-									id="width"
-									value={habit.name}
-									class="col-span-2 h-8 md:text-[1em]"
-									onchange={(e) => handleChangeHabit(e, habit)}
-								/>
+	<div class="mx-5 grid grid-cols-1 justify-between gap-5 md:mx-0 md:grid-cols-3">
+		<span class="text-[1.75em] font-bold tracking-widest md:col-span-2">Habit Tracker</span>
 
-								<div class="flex items-center gap-2 pl-2">
-									<Popover>
-										<PopoverTrigger
-											class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-primary'}
-										>
-											<Clock />
-										</PopoverTrigger>
-										<PopoverContent align="start">
-											<div class="flex flex-row items-center justify-between gap-2">
-												<Input type="time" bind:value={habit.startTime} />
-												<span> - </span>
-												<Input type="time" bind:value={habit.endTime} />
-											</div>
-										</PopoverContent>
-									</Popover>
-								</div>
-
-								<Dialog>
-									<DialogTrigger
-										class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-destructive'}
-									>
-										<Trash />
-									</DialogTrigger>
-
-									<DialogContent class="max-w-sm">
-										<p class="mb-4 text-[1em]">
-											Are you sure you want to delete the habit "<strong>{habit.name}</strong>"?
-										</p>
-										<div class="flex justify-end gap-2">
-											<DialogClose
-												class={buttonVariants({ variant: 'secondary' }) +
-													' cursor-pointer text-[1em]'}
-											>
-												Cancel
-											</DialogClose>
-											<Button
-												class={buttonVariants({ variant: 'destructive' }) +
-													' cursor-pointer text-[1em]'}
-												onclick={() => handleDeleteHabit(habit)}
-											>
-												Delete
-											</Button>
-										</div>
-									</DialogContent>
-								</Dialog>
-							</div>
-						{/each}
-
-						<div class="flex items-center justify-center">
-							<button
-								class={buttonVariants({ variant: 'outline' }) +
-									' w-full text-[1em] hover:bg-primary-foreground'}
-								on:click={() => handleAddNewHabit()}
-							>
-								Add Habit
-							</button>
-						</div>
-					</div></PopoverContent
-				>
-			</Popover>
-		</div>
-
-		<div class="flex min-w-5/12 flex-col rounded ring-2 ring-primary-foreground md:min-w-auto">
+		<div class="flex flex-col rounded ring-2 ring-primary-foreground md:row-span-2 md:min-w-auto">
 			<span class="bg-primary-foreground py-1 text-center text-[1.25em] font-bold">Month</span>
-			<ToggleGroup type="multiple">
-				<ToggleGroup
-					type="single"
-					bind:value={currentMonth}
-					variant="outline"
-					class="grid grid-cols-3 md:grid-cols-6"
-				>
-					{#each months as month}
-						<ToggleGroupItem
-							class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-20 cursor-pointer text-[1em] font-medium`}
-							value={month}
-							aria-label={`Select ${month}`}
-						>
-							{month}
-						</ToggleGroupItem>
-					{/each}
-				</ToggleGroup>
-			</ToggleGroup>
+			<ButtonGroup class="grid w-full grid-cols-3" orientation="vertical">
+				{#each months as month}
+					<Button
+						variant={currentMonth === month ? 'default' : 'outline'}
+						onclick={() => {
+							currentMonth = month;
+						}}>{month}</Button
+					>
+				{/each}
+			</ButtonGroup>
 		</div>
+
+		<Popover>
+			<PopoverTrigger class={buttonVariants({ variant: 'default' }) + ' mt-auto text-[1em]'}
+				>List Habit</PopoverTrigger
+			>
+			<PopoverContent class="min-w-[400px]" align="start">
+				<div
+					class="flex flex-col gap-2 overflow-hidden"
+					use:dndzone={{ items: listHabit, flipDurationMs: 300 }}
+					on:finalize={handleDndFinalize}
+					on:consider={handleDndFinalize}
+				>
+					{#each listHabit as habit (habit.id)}
+						<div animate:flip={{ duration: 300 }} class="flex items-center gap-2">
+							<div class="cursor-grab rounded p-1 hover:bg-secondary">
+								<GripVertical class="h-5 w-5 text-muted-foreground" />
+							</div>
+							<Input
+								id="width"
+								value={habit.name}
+								class="col-span-2 h-8 md:text-[1em]"
+								onchange={(e) => handleChangeHabit(e, habit)}
+							/>
+
+							<div class="flex items-center gap-2 pl-2">
+								<Popover>
+									<PopoverTrigger
+										class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-primary'}
+									>
+										<Clock />
+									</PopoverTrigger>
+									<PopoverContent align="start">
+										<div class="flex flex-row items-center justify-between gap-2">
+											<Input type="time" bind:value={habit.startTime} />
+											<span> - </span>
+											<Input type="time" bind:value={habit.endTime} />
+										</div>
+									</PopoverContent>
+								</Popover>
+							</div>
+
+							<Dialog>
+								<DialogTrigger
+									class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-destructive'}
+								>
+									<Trash />
+								</DialogTrigger>
+
+								<DialogContent class="max-w-sm">
+									<p class="mb-4 text-[1em]">
+										Are you sure you want to delete the habit "<strong>{habit.name}</strong>"?
+									</p>
+									<div class="flex justify-end gap-2">
+										<DialogClose
+											class={buttonVariants({ variant: 'secondary' }) +
+												' cursor-pointer text-[1em]'}
+										>
+											Cancel
+										</DialogClose>
+										<Button
+											class={buttonVariants({ variant: 'destructive' }) +
+												' cursor-pointer text-[1em]'}
+											onclick={() => handleDeleteHabit(habit)}
+										>
+											Delete
+										</Button>
+									</div>
+								</DialogContent>
+							</Dialog>
+						</div>
+					{/each}
+
+					<div class="flex items-center justify-center">
+						<button
+							class={buttonVariants({ variant: 'outline' }) +
+								' w-full text-[1em] hover:bg-primary-foreground'}
+							on:click={() => handleAddNewHabit()}
+						>
+							Add Habit
+						</button>
+					</div>
+				</div></PopoverContent
+			>
+		</Popover>
 	</div>
 
 	<div class="mx-5 mt-10 hidden md:block">
