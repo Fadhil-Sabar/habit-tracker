@@ -24,6 +24,14 @@
 	import { browser } from '$app/environment';
 	import { Dialog, DialogClose, DialogContent, DialogTrigger } from '$lib/components/ui/dialog';
 	import Calendar from '$lib/components/calendar/calendar.svelte';
+	import {
+		Select,
+		SelectContent,
+		SelectGroup,
+		SelectItem,
+		SelectTrigger
+	} from '$lib/components/ui/select';
+	import { Label } from '$lib/components/ui/label';
 
 	const months: Months[] = [
 		Months.JAN,
@@ -111,6 +119,16 @@
 			localStorage.setItem('listHabit', JSON.stringify(listHabit));
 		}
 	}
+
+	$: habit = {
+		value: listHabit[0]?.id || ''
+	};
+
+	$: triggerValue = {
+		habit: listHabit.find((item) => item.id === habit.value)
+	};
+
+	$: habitDays = triggerValue.habit?.dates.find((item) => item.month === currentMonth)?.days;
 </script>
 
 <div class="my-5 text-[16px] md:m-10">
@@ -202,7 +220,7 @@
 			</Popover>
 		</div>
 
-		<div class="flex flex-col rounded ring-2 ring-primary-foreground">
+		<div class="flex min-w-5/12 flex-col rounded ring-2 ring-primary-foreground md:min-w-auto">
 			<span class="bg-primary-foreground py-1 text-center text-[1.25em] font-bold">Month</span>
 			<ToggleGroup type="multiple">
 				<ToggleGroup
@@ -213,7 +231,7 @@
 				>
 					{#each months as month}
 						<ToggleGroupItem
-							class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-14 cursor-pointer text-[1em] font-medium`}
+							class={`transition-colors ${currentMonth === month && 'bg-primary! text-white!'} h-12 w-20 cursor-pointer text-[1em] font-medium`}
 							value={month}
 							aria-label={`Select ${month}`}
 						>
@@ -225,7 +243,7 @@
 		</div>
 	</div>
 
-	<div class="mx-5 mt-10">
+	<div class="mx-5 mt-10 hidden md:block">
 		<Table class="border-2 border-r-0 text-[1em]">
 			<TableHeader>
 				<TableRow>
@@ -282,6 +300,44 @@
 				{/each}
 			</TableBody>
 		</Table>
+	</div>
+
+	<div class="mx-5 mt-10 flex flex-col gap-5 md:hidden">
+		<Select type="single" bind:value={habit.value}>
+			<div class="flex">
+				<SelectTrigger class="w-full">{triggerValue.habit?.name ?? 'Select Habit'}</SelectTrigger>
+				<Button variant="outline" class="min-w-3/12"
+					>{triggerValue.habit?.startTime} - {triggerValue.habit?.endTime}</Button
+				>
+			</div>
+			<SelectContent>
+				<SelectGroup>
+					{#each listHabit as habit (habit.id)}
+						<SelectItem value={habit.id}>{habit.name}</SelectItem>
+					{/each}
+				</SelectGroup>
+			</SelectContent>
+		</Select>
+
+		<div class="flex w-full items-center gap-4">
+			<Progress value={((habitDays ?? []).length / listDate.length) * 100} max={100} />
+			<Label class="min-w-1/12"
+				>{Math.round(((habitDays ?? []).length / listDate.length) * 100)}%</Label
+			>
+		</div>
+
+		<div class="grid grid-cols-4 gap-2">
+			{#each listDate as date}
+				<Button
+					variant={habitDays?.includes(date) ? 'default' : 'outline'}
+					size="lg"
+					onclick={() => habit.value && handleCheckHabit(triggerValue.habit || listHabit[0], date)}
+					disabled={!habit.value}
+				>
+					{date}
+				</Button>
+			{/each}
+		</div>
 	</div>
 
 	<div class="my-10">
