@@ -17,13 +17,12 @@
 	import { Select, SelectGroup, SelectItem, SelectTrigger } from '../ui/select';
 	import SelectContent from '../ui/select/select-content.svelte';
 	import { getAllColorPalette } from '$lib/utils';
-	import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+	import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '../ui/popover';
 	import { Calendar } from '../ui/calendar';
-	import { CalendarIcon, Pencil, Trash } from 'lucide-svelte';
+	import { CalendarIcon, Pencil, Settings2, Trash } from 'lucide-svelte';
 	import { CalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
 	import { browser } from '$app/environment';
 	import Label from '../ui/label/label.svelte';
-
 	interface Event {
 		id: string;
 		title: string;
@@ -331,6 +330,7 @@
 	const handleDeleteEvent = () => {
 		allEvents = allEvents.filter((item) => item.id !== modal.id);
 		resetModal();
+		refreshEvents();
 	};
 
 	const handleDetailCalendar = (dataCalendar: (typeof calendars)[0]) => {
@@ -353,8 +353,8 @@
 	};
 </script>
 
-<div class="flex h-screen">
-	<div class="hidden w-64 flex-shrink-0 p-4 md:block">
+<div class="grid h-screen md:grid-cols-6">
+	<div class="hidden p-4 md:block">
 		<h2 class="mb-4 text-xl font-bold">Calendars</h2>
 		<div class="space-y-2">
 			{#each calendars as calendar}
@@ -382,13 +382,7 @@
 			{/each}
 
 			<div class="flex items-center justify-center">
-				<button
-					class={buttonVariants({ variant: 'outline' }) +
-						' w-full text-[1em] hover:bg-primary-foreground'}
-					on:click={handleOpenCalendar}
-				>
-					Add Calendar
-				</button>
+				<Button variant="outline" class="w-full" onclick={handleOpenCalendar}>Add Calendar</Button>
 				<Dialog open={calendar.open}>
 					<!-- <DialogTrigger class="w-full">
 					</DialogTrigger> -->
@@ -402,7 +396,7 @@
 											? 'Detail Calendar'
 											: 'Add New Calendar'}</DialogTitle
 								>
-								<div class="mr-5 flex space-x-2">
+								<div class="mr-5 space-x-2 {calendar.id ? 'flex' : 'hidden'}">
 									<Button
 										class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-primary'}
 										onclick={() => handleEditCalendar()}
@@ -491,7 +485,39 @@
 		</div>
 	</div>
 
-	<div class="flex min-h-min flex-1 flex-col border pb-5">
+	<div class="flex p-4 md:hidden">
+		<Popover>
+			<PopoverTrigger class="w-full">
+				<Button class="w-full">List Calendar</Button>
+			</PopoverTrigger>
+
+			<PopoverContent class="w-full min-w-[400px]" align="center">
+				{#each calendars as calendar}
+					<div class="group flex h-8 items-center justify-between">
+						<label class="flex cursor-pointer items-center space-x-2">
+							<input
+								type="checkbox"
+								bind:group={visibleCalendarIds}
+								value={calendar.id}
+								class="form-checkbox rounded"
+								style="color: {calendar.color};"
+								on:change={refreshEvents}
+							/>
+							<span class="size-3 rounded-full" style="background-color: {calendar.color};"></span>
+							<span>{calendar.name}</span>
+						</label>
+						<PopoverClose>
+							<Button size="sm" onclick={() => handleDetailCalendar(calendar)}>
+								<Settings2 />
+							</Button>
+						</PopoverClose>
+					</div>
+				{/each}
+			</PopoverContent>
+		</Popover>
+	</div>
+
+	<div class="flex min-h-min flex-col border pb-5 md:col-span-5">
 		<div class="flex items-center justify-between border-b p-2">
 			<Label class="text-[1.5em] font-bold">{displayedMonth}</Label>
 			<div class="flex space-x-2">
@@ -592,7 +618,7 @@
 							? 'Detail Event'
 							: 'Add New Event'}</DialogTitle
 				>
-				<div class="mr-5 flex space-x-2">
+				<div class="mr-5 space-x-2 {mode.isDetail ? 'flex' : 'hidden'}">
 					<Button
 						class={buttonVariants({ size: 'icon' }) + ' cursor-pointer bg-primary'}
 						onclick={() => handleEditModal()}
@@ -609,17 +635,17 @@
 						<DialogContent class="max-w-sm">
 							<p class="mb-4 text-[1em]">Are you sure you want to delete the event?</p>
 							<div class="flex justify-end gap-2">
-								<Button
+								<DialogClose
 									class={buttonVariants({ variant: 'secondary' }) + ' cursor-pointer text-[1em]'}
 								>
 									Cancel
-								</Button>
-								<Button
+								</DialogClose>
+								<DialogClose
 									class={buttonVariants({ variant: 'destructive' }) + ' cursor-pointer text-[1em]'}
 									onclick={() => handleDeleteEvent()}
 								>
 									Delete
-								</Button>
+								</DialogClose>
 							</div>
 						</DialogContent>
 					</Dialog>
