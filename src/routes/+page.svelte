@@ -160,7 +160,7 @@
 			<PopoverTrigger class={buttonVariants({ variant: 'default' }) + ' mt-auto text-[1em]'}
 				>List Habit</PopoverTrigger
 			>
-			<PopoverContent class="min-w-[400px]" align="start">
+			<PopoverContent class="w-full min-w-[400px]" align="center">
 				<div
 					class="flex flex-col gap-2 overflow-hidden"
 					use:dndzone={{ items: listHabit, flipDurationMs: 300 }}
