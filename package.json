@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "vite dev --host",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
@@ -46,6 +46,7 @@
 	"dependencies": {
 		"date-fns": "^4.1.0",
 		"lucide-svelte": "^0.545.0",
+		"mode-watcher": "^1.1.0",
 		"svelte-dnd-action": "^0.9.65",
 		"uuid": "^13.0.0"
 	}

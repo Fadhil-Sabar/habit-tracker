@@ -22,6 +22,7 @@
 	import { CalendarIcon, Pencil, Trash } from 'lucide-svelte';
 	import { CalendarDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
 	import { browser } from '$app/environment';
+	import Label from '../ui/label/label.svelte';
 
 	interface Event {
 		id: string;
@@ -127,11 +128,23 @@
 		return calendars.find((cal) => cal.id === calendarId);
 	};
 
-	$: getEventsForDay = (date: Date) => {
-		return filteredEvents.filter((event) => {
-			const eventDate = event.date.toDate(getLocalTimeZone()).toLocaleDateString();
-			return isSameDay(new Date(eventDate), date);
-		});
+	$: eventsMap = filteredEvents.reduce(
+		(acc, event) => {
+			const dateKey = event.date.toString();
+			if (!acc[dateKey]) acc[dateKey] = [];
+			acc[dateKey].push(event);
+			return acc;
+		},
+		{} as Record<string, Event[]>
+	);
+
+	const getEventsForDay = (day: Date) => {
+		const dateKey = new CalendarDate(
+			day.getFullYear(),
+			day.getMonth() + 1,
+			day.getDate()
+		).toString();
+		return eventsMap[dateKey] || [];
 	};
 
 	const calculatePosition = (event: { startHour: number; durationHours: number }) => {
@@ -340,7 +353,7 @@
 	};
 </script>
 
-<div class="flex h-screen bg-white text-gray-800">
+<div class="flex h-screen">
 	<div class="hidden w-64 flex-shrink-0 p-4 md:block">
 		<h2 class="mb-4 text-xl font-bold">Calendars</h2>
 		<div class="space-y-2">
@@ -480,22 +493,16 @@
 
 	<div class="flex min-h-min flex-1 flex-col border pb-5">
 		<div class="flex items-center justify-between border-b p-2">
-			<h2 class="text-2xl font-bold text-gray-700">{displayedMonth}</h2>
+			<Label class="text-[1.5em] font-bold">{displayedMonth}</Label>
 			<div class="flex space-x-2">
-				<button on:click={goToPrevWeek} class="rounded bg-gray-100 px-3 py-1 hover:bg-gray-200">
-					&lt; Prev
-				</button>
-				<button on:click={goToToday} class="rounded bg-gray-100 px-3 py-1 hover:bg-gray-200">
-					Today
-				</button>
-				<button on:click={goToNextWeek} class="rounded bg-gray-100 px-3 py-1 hover:bg-gray-200">
-					Next &gt;
-				</button>
+				<Button onclick={goToPrevWeek} class="py- rounded px-3">&lt;</Button>
+				<Button onclick={goToToday} class="py- rounded px-3">Today</Button>
+				<Button onclick={goToNextWeek} class="py- rounded px-3">&gt;</Button>
 			</div>
 		</div>
 
 		<div class="flex border-b">
-			<div class="w-20 flex-shrink-0"></div>
+			<div class="w-16 flex-shrink-0"></div>
 			{#each displayedWeek as day}
 				<div class="flex-1 p-2 text-center font-medium">
 					{format(day, 'E d')}
@@ -504,11 +511,13 @@
 		</div>
 
 		<div class="flex flex-1 pt-3">
-			<div class="w-20 flex-shrink-0">
+			<div class="w-16 flex-shrink-0">
 				{#each timeSlots as hour}
-					<div class="-mt-2 h-14 pr-2 text-right text-sm text-gray-500">
+					<div class="-mt-2 h-14 pr-2 text-right text-sm text-muted-foreground">
 						{#if hour === 0}
 							12 AM
+						{:else if hour === 12}
+							12 PM
 						{:else if hour < 12}
 							{hour} AM
 						{:else if hour === 24}
