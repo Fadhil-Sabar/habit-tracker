@@ -10,7 +10,7 @@
 	import { getDaysInMonth } from '$lib/utils';
 	import { dndzone } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
-	import { Clock, GripVertical, Moon, Trash } from 'lucide-svelte';
+	import { Clock, GripVertical, Moon, MoonIcon, SunIcon, Trash } from 'lucide-svelte';
 	import { Months, type Habit } from '$lib/stores';
 	import Table from '$lib/components/ui/table/table.svelte';
 	import TableHeader from '$lib/components/ui/table/table-header.svelte';
@@ -33,6 +33,7 @@
 	} from '$lib/components/ui/select';
 	import { Label } from '$lib/components/ui/label';
 	import { ButtonGroup } from '$lib/components/ui/button-group';
+	import { toggleMode } from 'mode-watcher';
 
 	const months: Months[] = [
 		Months.JAN,
@@ -136,8 +137,8 @@
 	<div class="mx-5 grid grid-cols-1 justify-between gap-5 md:mx-0 md:grid-cols-3">
 		<span class="text-[1.75em] font-bold tracking-widest md:col-span-2">Habit Tracker</span>
 
-		<div class="flex flex-col rounded ring-2 ring-primary-foreground md:row-span-2 md:min-w-auto">
-			<span class="bg-primary-foreground py-1 text-center text-[1.25em] font-bold">Month</span>
+		<div class="flex flex-col rounded ring-2 ring-secondary md:row-span-2 md:min-w-auto">
+			<span class="bg-secondary py-1 text-center text-[1.25em] font-bold">Month</span>
 			<ButtonGroup class="grid w-full grid-cols-3" orientation="vertical">
 				{#each months as month, i}
 					<Button
@@ -252,7 +253,7 @@
 					>
 					{#each listDate as date}
 						<TableHead
-							class="min-w-12 border-r-2 bg-primary-foreground text-center font-semibold transition-colors hover:cursor-pointer hover:bg-primary/30!"
+							class="min-w-12 border-r-2 text-center font-semibold transition-colors hover:cursor-pointer hover:bg-primary/30!"
 							>{date}</TableHead
 						>
 					{/each}
@@ -342,8 +343,14 @@
 	</div>
 
 	<div class="fixed right-0 bottom-0 m-5">
-		<Button size="icon" class="hover:cursor-pointer hover:bg-primary/80">
-			<Moon />
+		<Button onclick={toggleMode} variant="default" size="icon">
+			<SunIcon
+				class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 !transition-all dark:scale-0 dark:-rotate-90"
+			/>
+			<MoonIcon
+				class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0"
+			/>
+			<span class="sr-only">Toggle theme</span>
 		</Button>
 	</div>
 </div>
