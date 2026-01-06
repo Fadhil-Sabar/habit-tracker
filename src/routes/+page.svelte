@@ -139,8 +139,13 @@
 		<div class="flex flex-col rounded ring-2 ring-primary-foreground md:row-span-2 md:min-w-auto">
 			<span class="bg-primary-foreground py-1 text-center text-[1.25em] font-bold">Month</span>
 			<ButtonGroup class="grid w-full grid-cols-3" orientation="vertical">
-				{#each months as month}
+				{#each months as month, i}
 					<Button
+						class="rounded-none 
+                {i === 0 ? 'rounded-tl' : ''} 
+                {i === 2 ? 'rounded-tr' : ''}
+                {i === 9 ? 'rounded-bl' : ''}
+                {i === 11 ? 'rounded-br' : ''}"
 						variant={currentMonth === month ? 'default' : 'outline'}
 						onclick={() => {
 							currentMonth = month;
