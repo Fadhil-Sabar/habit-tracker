@@ -166,7 +166,7 @@
 				class={buttonVariants({ variant: 'default' }) +
 					' translate-y-5 text-[1em] md:mt-auto md:translate-0'}>List Habit</PopoverTrigger
 			>
-			<PopoverContent class="w-full min-w-[400px]" align="center">
+			<PopoverContent class="w-full max-w-[95dvw]" align="center">
 				<div
 					class="flex flex-col gap-2 overflow-hidden"
 					use:dndzone={{ items: listHabit, flipDurationMs: 300 }}
@@ -308,7 +308,7 @@
 
 	<div class="mx-5 mt-10 flex flex-col gap-5 md:hidden">
 		<Select type="single" bind:value={habit.value}>
-			<div class="flex">
+			<div class="flex gap-4">
 				<SelectTrigger class="w-full">{triggerValue.habit?.name ?? 'Select Habit'}</SelectTrigger>
 				<Button variant="outline" class="min-w-3/12"
 					>{triggerValue.habit?.startTime} - {triggerValue.habit?.endTime}</Button
