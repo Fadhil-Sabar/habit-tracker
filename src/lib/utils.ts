@@ -39,3 +39,15 @@ export function getAllColorPalette() {
 		'#FFF5EE',
 	]
 }
+
+export function getWeekDays(locale: string)
+{
+    const baseDate = new Date(Date.UTC(2017, 0, 2));
+    const weekDays = [];
+    for(let i = 0; i < 7; i++)
+    {       
+        weekDays.push(baseDate.toLocaleDateString(locale, { weekday: 'short' }));
+        baseDate.setDate(baseDate.getDate() + 1);       
+    }
+    return weekDays;
+}
