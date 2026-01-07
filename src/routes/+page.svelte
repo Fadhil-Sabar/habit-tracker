@@ -159,9 +159,12 @@
 			</ButtonGroup>
 		</div>
 
+		<div class="w-full translate-y-4 border md:hidden"></div>
+
 		<Popover>
-			<PopoverTrigger class={buttonVariants({ variant: 'default' }) + ' mt-auto text-[1em]'}
-				>List Habit</PopoverTrigger
+			<PopoverTrigger
+				class={buttonVariants({ variant: 'default' }) +
+					' translate-y-5 text-[1em] md:mt-auto md:translate-0'}>List Habit</PopoverTrigger
 			>
 			<PopoverContent class="w-full min-w-[400px]" align="center">
 				<div
