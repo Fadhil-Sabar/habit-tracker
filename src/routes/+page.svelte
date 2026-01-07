@@ -64,6 +64,10 @@
 	let listHabit: Habit[] = [];
 	let hasInit = false;
 
+	let habit = {
+		value: ''
+	};
+
 	const handleCheckHabit = (habitToUpdate: Habit, date: number) => {
 		listHabit = listHabit.map((h) => {
 			if (h.id === habitToUpdate.id) {
@@ -110,6 +114,7 @@
 		const savedHabits = localStorage.getItem('listHabit');
 		if (savedHabits) {
 			listHabit = JSON.parse(savedHabits);
+			habit.value = listHabit[0].id;
 		}
 		hasInit = true;
 	});
@@ -124,10 +129,6 @@
 			localStorage.setItem('listHabit', JSON.stringify(listHabit));
 		}
 	}
-
-	$: habit = {
-		value: listHabit[0]?.id || ''
-	};
 
 	$: triggerValue = {
 		habit: listHabit.find((item) => item.id === habit.value)

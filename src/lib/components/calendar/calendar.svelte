@@ -486,7 +486,7 @@
 	</div>
 
 	<div class="flex flex-col p-4 md:hidden">
-		<div class="w-full -translate-y-4 border md:hidden"></div>
+		<div class="w-full -translate-y-8 border md:hidden"></div>
 		<Popover>
 			<PopoverTrigger class="w-full">
 				<Button class="w-full">List Calendar</Button>
