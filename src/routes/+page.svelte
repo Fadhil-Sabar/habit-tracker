@@ -7,7 +7,7 @@
 	import PopoverTrigger from '$lib/components/ui/popover/popover-trigger.svelte';
 	import ToggleGroupItem from '$lib/components/ui/toggle-group/toggle-group-item.svelte';
 	import ToggleGroup from '$lib/components/ui/toggle-group/toggle-group.svelte';
-	import { getDaysInMonth } from '$lib/utils';
+	import { getDaysInMonth, getWeekDays } from '$lib/utils';
 	import { dndzone } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
 	import { Clock, GripVertical, Moon, MoonIcon, SunIcon, Trash } from 'lucide-svelte';
@@ -54,6 +54,9 @@
 	let currentMonth = months[today.getMonth()];
 	const currentYear = today.getFullYear();
 	let listDate = getDaysInMonth(months.indexOf(currentMonth) + 1, currentYear);
+
+	let listDay = getWeekDays('en-EN');
+	$: startOfWeek = new Date(`${currentYear}-${currentMonth}`).getDay();
 
 	let filterProgress = today.getDate();
 	let filterProgressTitle = `${today.toLocaleString('default', { month: 'long' })}`;
@@ -324,13 +327,20 @@
 			>
 		</div>
 
-		<div class="grid grid-cols-4 gap-2">
-			{#each listDate as date}
+		<div class="grid grid-cols-7 gap-2 divide-x">
+			{#each listDay as day}
+				<Label class="w-full justify-center p-2">{day}</Label>
+			{/each}
+		</div>
+
+		<div class="grid grid-cols-7 gap-2">
+			{#each listDate as date, i}
 				<Button
 					variant={habitDays?.includes(date) ? 'default' : 'outline'}
 					size="lg"
 					onclick={() => habit.value && handleCheckHabit(triggerValue.habit || listHabit[0], date)}
 					disabled={!habit.value}
+					style={i === 0 ? `grid-column-start: ${startOfWeek + 1};` : ''}
 				>
 					{date}
 				</Button>
