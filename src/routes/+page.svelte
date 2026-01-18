@@ -68,6 +68,7 @@
 	let currentMonth = months[today.getMonth()];
 	const currentYear = today.getFullYear();
 	let listDate = getDaysInMonth(months.indexOf(currentMonth) + 1, currentYear);
+	let currentDate = today.getDate();
 
 	let listDay = getWeekDays('en-EN');
 	$: startOfWeek = new Date(`${currentYear}-${currentMonth}`).getDay();
@@ -494,7 +495,11 @@
 		<div class="grid grid-cols-7 gap-2">
 			{#each listDate as date, i}
 				<Button
-					variant={habitDays?.includes(date) ? 'default' : 'outline'}
+					variant={habitDays?.includes(date)
+						? 'default'
+						: currentDate === date
+							? 'secondary'
+							: 'outline'}
 					size="lg"
 					onclick={() => habit.value && handleCheckHabit(triggerValue.habit || listHabit[0], date)}
 					disabled={!habit.value}
