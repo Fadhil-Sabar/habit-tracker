@@ -354,6 +354,7 @@
 </script>
 
 <div class="grid h-screen md:grid-cols-6">
+	<!-- * Calendar desktop -->
 	<div class="hidden p-4 md:block">
 		<h2 class="mb-4 text-xl font-bold">Calendars</h2>
 		<div class="space-y-2">
@@ -485,6 +486,7 @@
 		</div>
 	</div>
 
+	<!-- * List calendar mobile -->
 	<div class="flex flex-col p-4 md:hidden">
 		<div class="w-full -translate-y-8 border md:hidden"></div>
 		<Popover>

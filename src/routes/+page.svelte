@@ -460,6 +460,7 @@
 		</Table>
 	</div>
 
+	<!-- * Date mobile -->
 	<div class="mx-5 mt-10 flex flex-col gap-5 md:hidden">
 		<Select type="single" bind:value={habit.value}>
 			<div class="flex gap-4">
@@ -497,7 +498,7 @@
 					size="lg"
 					onclick={() => habit.value && handleCheckHabit(triggerValue.habit || listHabit[0], date)}
 					disabled={!habit.value}
-					style={i === 0 ? `grid-column-start: ${startOfWeek + 1};` : ''}
+					style={i === 0 ? `grid-column-start: ${startOfWeek === 0 ? 7 : startOfWeek};` : ''}
 				>
 					{date}
 				</Button>
